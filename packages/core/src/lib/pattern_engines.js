@@ -168,6 +168,7 @@ const PatternEngines = Object.create({
           }
         } catch (err) {
           errorMessage = err.message;
+          logger.debug(err);
         } finally {
           // report on the status of the engine, one way or another!
           logger.info(

@@ -10,18 +10,13 @@
 'use strict';
 
 const fs = require('fs');
-const MemoryFS = require('memory-fs');
-const process = require('process');
 const path = require('path');
-const { promisify } = require('util');
 const React = require('react');
 const ReactDOMServer = require('react-dom/server');
-const Hogan = require('hogan.js');
+const Builder = require('parcel-bundler');
 const beautify = require('js-beautify');
-const webpack = require('webpack');
-const tmp = require('tmp-promise');
-const webpackBuilder = require('./webpackBuilder');
 const util = require('./util');
+const builder = require('./parcelBuilder.js');
 
 // engine info
 const engineFileExtension = ['.jsx', '.js'];
@@ -50,10 +45,6 @@ const errorStyling = `
 let patternLabConfig = {};
 let enableRuntimeCode = true;
 
-const outputTemplate = Hogan.compile(
-  fs.readFileSync(path.join(__dirname, './outputTemplate.mustache'), 'utf8')
-);
-
 const registeredComponents = {
   byPatternPartial: {},
 };
@@ -78,12 +69,13 @@ const engine_react = {
     /* eslint-disable no-eval */
     try {
       // generate the server-side rendering script
-      const serverSideScript = await webpackBuilder.generateServerScript(
+      const serverSideScript = await builder.generateServerScript(
         pattern,
         data,
         patternLabConfig,
         engineFileExtension
       );
+      const clientSideScript = '';
       // const clientSideScript = await webpackBuilder.generateClientScript(
       //   pattern,
       //   data,
@@ -97,6 +89,7 @@ const engine_react = {
       //   'blob.js'
       // );
       // const patternModule = require(blobPath).default;
+
       let patternModule;
       try {
         patternModule = eval(serverSideScript);
@@ -107,11 +100,7 @@ const engine_react = {
         React.createFactory(patternModule.default)(data)
       );
 
-      return outputTemplate.render({
-        htmlOutput: staticMarkup,
-        // scriptOutput: clientSideScript,
-        scriptOutput: '',
-      });
+      return `${staticMarkup}<script>${clientSideScript}</script>`;
     } catch (e) {
       const errorMessage = `Error rendering React pattern "${
         pattern.patternName
