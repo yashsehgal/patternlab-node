@@ -5,6 +5,7 @@ Thumbs.db
 .nyc_output/
 .vscode/
 .idea/
+.cache/
 packages/core/test/public
 packages/*/public
 !packages/core/test/patterns/public/.gitkeep
