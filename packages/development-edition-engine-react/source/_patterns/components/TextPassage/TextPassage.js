@@ -3,11 +3,6 @@ import './TextPassage.css';
 
 export class TextPassage extends Component {
   render() {
-    return (
-      <div className="c-text-passage">
-        { this.props.children }
-      </div>
-    );
+    return <div className="c-text-passage">{this.props.children}</div>;
   }
 }
-
