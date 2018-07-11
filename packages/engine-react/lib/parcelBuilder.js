@@ -5,6 +5,7 @@ const Bundler = require('parcel-bundler');
 const util = require('./util');
 
 const engineModulesPath = path.resolve(__dirname, '..', 'node_modules');
+console.log('engineModulesPath = ', engineModulesPath);
 
 async function generateServerScript(
   pattern,
@@ -13,30 +14,32 @@ async function generateServerScript(
   engineFileExtension
 ) {
   console.log('generating server script...');
-
-  // Bundler options
-  const options = {
+  const parcelOptions = {
     // cache: true, // Enabled or disables caching, defaults to true
     // cacheDir: '.cache', // The directory cache gets put in, defaults to .cache
     minify: false, // Minify files, enabled if process.env.NODE_ENV === 'production'
     target: 'node', // browser/node/electron, defaults to browser
     logLevel: 3, // 3 = log everything, 2 = log warnings & errors, 1 = log errors
     sourceMaps: true, // Enable or disable sourcemaps, defaults to enabled (not supported in minified builds yet)
-    detailedReport: false // Prints a detailed report of the bundles, assets, filesizes and times, defaults to false, reports are only printed if watch is disabled
+    detailedReport: false, // Prints a detailed report of the bundles, assets, filesizes and times, defaults to false, reports are only printed if watch is disabled
+    watch: false,
   };
 
   // Initialises a bundler using the entrypoint location and options provided
-  const bundler = new Bundler(`./${pattern.fileName}${pattern.fileExtension}`, options);
+  const bundler = new Bundler(
+    path.join(patternLabConfig.paths.source.patterns, pattern.relPath),
+    parcelOptions
+  );
 
   // Run the bundler, this returns the main bundle
   // Use the events if you're using watch mode as this promise will only trigger once and not for every rebuild
-  return bundler
-    .bundle()
-    .then(bundle => {
-      console.log('bundle:', bundle);
-
-      return '';
-    });
+  return bundler.bundle().then(bundle => {
+    console.log(
+      'bundle.entryAsset.generated.js = ',
+      bundle.entryAsset.generated.js
+    );
+    return bundle.entryAsset.generated.js;
+  });
 }
 
 function createClientSideEntry(data) {
@@ -65,14 +68,6 @@ async function writeComponentScript(componentScript, patternOutputPath) {
   return fileName;
 }
 
-async function createClientSideEntryTmp(data) {
-  const entryFile = await tmp.file({ prefix: 'pattern-', postfix: '.js' });
-  const entryFileContents = createClientSideEntry(data);
-
-  fs.writeSync(entryFile.fd, entryFileContents, { encoding: 'utf8' });
-  return entryFile;
-}
-
 async function generateClientScript(
   pattern,
   data,
@@ -81,8 +76,14 @@ async function generateClientScript(
   componentScript
 ) {
   console.log('generating client script...');
-  const patternOutputDirectory = util.getAbsolutePatternOutputDir(pattern, patternLabConfig);
-  const patternDirectory = util.getAbsolutePatternDir(pattern, patternLabConfig);
+  const patternOutputDirectory = util.getAbsolutePatternOutputDir(
+    pattern,
+    patternLabConfig
+  );
+  const patternDirectory = util.getAbsolutePatternDir(
+    pattern,
+    patternLabConfig
+  );
 
   const componentFileName = await writeComponentScript(
     componentScript,
