@@ -2,6 +2,7 @@
   "cacheBust": true,
   "cleanPublic": true,
   "defaultPattern": "all",
+  "defaultPatternInfoPanelCode": "html",
   "defaultShowPatternInfo": false,
   "ishControlsHide": {
     "s": false,
